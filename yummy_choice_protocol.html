@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yummy Choice: SOP Protocol</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-noir: #09090b; /* Very dark slate */
+            --bg-panel: #18181b;
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff0055;
+            --neon-yellow: #facc15;
+            --text-main: #e4e4e7;
+            --text-dim: #a1a1aa;
+        }
+
+        body {
+            background-color: var(--bg-noir);
+            color: var(--text-main);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(0, 243, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 50% 100%, rgba(255, 0, 85, 0.05) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        /* Scanline Overlay for Cinematic feel */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.3;
+        }
+
+        /* Typography */
+        .font-mono-tech {
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* Neumorphic/Glowing Components */
+        .neo-panel {
+            background: var(--bg-panel);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .btn-neon-cyan {
+            background: transparent;
+            color: var(--neon-cyan);
+            border: 1px solid var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2), inset 0 0 10px rgba(0, 243, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .btn-neon-cyan:hover {
+            background: var(--neon-cyan);
+            color: var(--bg-noir);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
+        }
+
+        .btn-neon-pink {
+            background: transparent;
+            color: var(--neon-pink);
+            border: 1px solid var(--neon-pink);
+            transition: all 0.3s ease;
+        }
+        .btn-neon-pink.selected {
+            background: var(--neon-pink);
+            color: white;
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.5);
+        }
+
+        .input-noir {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: var(--neon-cyan);
+        }
+        .input-noir:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0, 243, 255, 0.3);
+        }
+
+        /* Glitch Animation for Titles */
+        .glitch {
+            position: relative;
+            color: white;
+        }
+        .glitch::before, .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+        }
+        .glitch::before {
+            left: 2px; text-shadow: -1px 0 red; clip: rect(24px, 550px, 90px, 0); animation: glitch-anim 2s infinite linear alternate-reverse;
+        }
+        .glitch::after {
+            left: -2px; text-shadow: -1px 0 blue; clip: rect(85px, 550px, 140px, 0); animation: glitch-anim 2.5s infinite linear alternate-reverse;
+        }
+        @keyframes glitch-anim {
+            0% { clip: rect(10px, 9999px, 86px, 0); }
+            20% { clip: rect(32px, 9999px, 14px, 0); }
+            40% { clip: rect(98px, 9999px, 53px, 0); }
+            60% { clip: rect(12px, 9999px, 78px, 0); }
+            80% { clip: rect(65px, 9999px, 92px, 0); }
+            100% { clip: rect(43px, 9999px, 21px, 0); }
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            background: #27272a;
+            border-radius: 999px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan));
+            width: 0%;
+            transition: width 0.5s ease-out;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+
+        /* Utilities */
+        .hidden-screen { display: none !important; }
+        .fade-in { animation: fadeIn 0.5s ease-in forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Badge Pulse */
+        .badge-pulse { animation: pulseBadge 2s infinite; }
+        @keyframes pulseBadge {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(250, 204, 21, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="scanlines"></div>
+
+    <main id="app-container" class="w-full max-w-md relative z-10 neo-panel rounded-2xl p-6 sm:p-8 flex flex-col gap-6">
+        
+        <!-- ==================== SCREEN 1: GATEWAY ==================== -->
+        <div id="screen-gateway" class="flex flex-col gap-6 fade-in">
+            <div class="text-center">
+                <p class="text-xs text-[var(--neon-pink)] tracking-[0.2em] font-mono-tech mb-2">RESTRICTED ACCESS</p>
+                <h1 class="text-3xl font-bold glitch uppercase tracking-wide" data-text="YUMMY CHOICE">YUMMY CHOICE</h1>
+                <h2 class="text-xl text-[var(--neon-cyan)] mt-1 font-light">SOP RECOVERY PROTOCOL</h2>
+            </div>
+
+            <div class="space-y-4 mt-4">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1 uppercase font-mono-tech">Operative Name</label>
+                    <input type="text" id="input-name" class="w-full input-noir p-3 rounded-lg text-sm" placeholder="Enter full name" autocomplete="off">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1 uppercase font-mono-tech">Nomor Telepon</label>
+                    <input type="text" id="input-phone" class="w-full input-noir p-3 rounded-lg text-sm" placeholder="Enter phone number (e.g. 0812...)" autocomplete="off">
+                </div>
+            </div>
+
+            <button onclick="app.login()" class="btn-neon-cyan w-full py-4 rounded-lg font-bold tracking-widest mt-4 flex items-center justify-center gap-2">
+                <span>INITIALIZE SYSTEM</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"></path></svg>
+            </button>
+            <p id="login-error" class="text-[var(--neon-pink)] text-xs text-center hidden">Access Denied: Name and Phone Number required.</p>
+        </div>
+
+        <!-- ==================== SCREEN 2: BRIEFING ==================== -->
+        <div id="screen-briefing" class="hidden-screen flex flex-col gap-6 fade-in">
+            <div class="border-l-4 border-[var(--neon-pink)] pl-4">
+                <h2 class="text-2xl font-bold text-white uppercase tracking-wider">Mission Briefing</h2>
+                <p class="text-[var(--neon-cyan)] text-sm font-mono-tech">Status: CRITICAL</p>
+            </div>
+
+            <div class="bg-black/40 p-4 rounded-lg border border-gray-800 text-sm leading-relaxed space-y-3">
+                <p class="text-gray-300">
+                    <span class="text-[var(--neon-yellow)]">WARNING:</span> Data operasional <span class="font-bold text-white">Yummy Choice</span> telah mengalami korupsi. Urutan Standar Operasional Prosedur (SOP) untuk produk Crispy Boneless Chicken & Spicy Chicken Tender berantakan.
+                </p>
+                <p class="text-gray-300">
+                    Sebagai <span class="text-[var(--neon-cyan)] font-semibold">Quality Control Operative</span>, tugas Anda adalah memulihkan data tersebut dengan melengkapi kalimat prosedur yang hilang.
+                </p>
+                <div class="bg-gray-900 p-3 rounded mt-2 border border-gray-700">
+                    <h3 class="text-xs uppercase text-gray-400 font-bold mb-2">Rules of Engagement:</h3>
+                    <ul class="list-disc pl-5 text-xs text-gray-300 space-y-1">
+                        <li>Jawab 10 pertanyaan enkripsi SOP.</li>
+                        <li>Dapatkan poin untuk setiap pemulihan data yang benar.</li>
+                        <li>Amankan Lencana "Elite Operative" pada pertengahan misi.</li>
+                        <li>Kecepatan dan akurasi adalah kunci.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <button onclick="app.startMission()" class="btn-neon-cyan w-full py-4 rounded-lg font-bold tracking-widest mt-2 animate-pulse">
+                ACCEPT MISSION
+            </button>
+        </div>
+
+        <!-- ==================== SCREEN 3: CORE GAME ==================== -->
+        <div id="screen-game" class="hidden-screen flex flex-col gap-4 h-full min-h-[60vh]">
+            
+            <!-- Top HUD -->
+            <div class="flex justify-between items-center bg-black/50 p-3 rounded-lg border border-gray-800">
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-gray-400 uppercase font-mono-tech">Operative</span>
+                    <span id="hud-name" class="text-sm font-bold text-[var(--neon-cyan)] truncate max-w-[100px]">NAME</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div id="badge-container" class="hidden text-2xl filter drop-shadow-md opacity-50 transition-all duration-300" title="Milestone Reached!">
+                        🛡️
+                    </div>
+                    <div class="flex flex-col items-end">
+                        <span class="text-[10px] text-gray-400 uppercase font-mono-tech">Data Recovered</span>
+                        <span id="hud-score" class="text-sm font-bold text-[var(--neon-pink)]">0 PTS</span>
+                    </div>
+                    <button onclick="audioManager.toggleMute()" id="btn-mute" class="p-2 bg-gray-800 rounded-full text-gray-400 hover:text-white transition">
+                        <svg id="icon-unmuted" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M155.51,24.81a8,8,0,0,0-8.42.88L77.25,80H32A16,16,0,0,0,16,96v64a16,16,0,0,0,16,16H77.25l69.84,54.31A8,8,0,0,0,160,224V32A8,8,0,0,0,155.51,24.81ZM144,207.64,82.08,159.51A8,8,0,0,0,77.25,158V98a8,8,0,0,0,4.83-1.51L144,48.36ZM197.66,82.34a8,8,0,0,0-11.32,11.32,32,32,0,0,1,0,45.25,8,8,0,0,0,11.32,11.32,48,48,0,0,0,0-67.88Zm33.94-33.93a8,8,0,0,0-11.31,11.32,80,80,0,0,1,0,113.13,8,8,0,0,0,11.31,11.32A96,96,0,0,0,231.6,48.41Z"></path></svg>
+                        <svg id="icon-muted" class="hidden" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M213.92,106.62a8,8,0,1,0-11.84,10.76,32,32,0,0,1-1.3,42.85,8,8,0,0,0,11.32,11.31,47.93,47.93,0,0,0,1.82-64.92ZM241.6,73.45a8,8,0,1,0-11.2-11.42,79.88,79.88,0,0,1,1.19,109.11,8,8,0,1,0,11.32,11.31A95.84,95.84,0,0,0,241.6,73.45ZM155.51,24.81a8,8,0,0,0-8.42.88L77.25,80H32A16,16,0,0,0,16,96v64a16,16,0,0,0,16,16H53.09l-3.32,3.31a8,8,0,0,0,11.32,11.32L212.92,38.79a8,8,0,1,0-11.32-11.32l-21.78,21.79-19.82-15.42A8,8,0,0,0,155.51,24.81ZM32,160V96H77.25V158ZM144,48.36V117.84l-25.29-25.29L144,72.93ZM96,151.76V113.83l48,48v45.8Z"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="w-full">
+                <div class="flex justify-between text-xs text-gray-400 font-mono-tech mb-1">
+                    <span>SECTOR <span id="progress-text">1/10</span></span>
+                    <span id="progress-pct">0%</span>
+                </div>
+                <div class="progress-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+            </div>
+
+            <!-- Question Area -->
+            <div class="flex-grow flex flex-col justify-center mt-4 mb-4">
+                <div class="bg-gray-900/80 p-5 rounded-xl border border-gray-700 relative">
+                    <div class="absolute -top-3 -left-2 bg-[var(--neon-pink)] text-white text-[10px] px-2 py-1 font-bold uppercase rounded-sm">Data Fragment</div>
+                    <p id="question-text" class="text-lg leading-relaxed mt-2 text-gray-200 min-h-[80px]">
+                        <!-- Question text injected here -->
+                    </p>
+                </div>
+            </div>
+
+            <!-- Options Area (Word Bank) -->
+            <div class="mt-auto">
+                <p class="text-xs text-gray-400 font-mono-tech mb-2 text-center uppercase tracking-widest">Select matching fragment</p>
+                <div id="options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Options injected here -->
+                </div>
+            </div>
+            
+            <!-- Feedback Overlay (Hidden by default) -->
+            <div id="feedback-overlay" class="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden-screen rounded-2xl pointer-events-none">
+                <div id="feedback-content" class="text-center transform scale-90 transition-transform duration-200">
+                    <div id="feedback-icon" class="text-6xl mb-2">✅</div>
+                    <h3 id="feedback-title" class="text-2xl font-bold tracking-widest uppercase">CORRECT</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SCREEN 4: DEBRIEF ==================== -->
+        <div id="screen-debrief" class="hidden-screen flex flex-col gap-4 fade-in">
+            <div class="text-center pb-4 border-b border-gray-800">
+                <h2 class="text-xl text-gray-400 font-mono-tech uppercase mb-1">Mission Report</h2>
+                <h1 id="result-rank" class="text-4xl font-bold uppercase glitch" data-text="EVALUATING...">EVALUATING...</h1>
+                <p id="result-message" class="text-sm mt-2 text-gray-300"></p>
+            </div>
+
+            <div class="flex justify-between items-center bg-black/40 p-4 rounded-lg border border-gray-800">
+                <div class="text-center">
+                    <p class="text-[10px] text-gray-500 uppercase font-mono-tech">Accuracy</p>
+                    <p id="result-accuracy" class="text-2xl font-bold text-[var(--neon-cyan)]">0%</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-[10px] text-gray-500 uppercase font-mono-tech">Final Score</p>
+                    <p id="result-score" class="text-2xl font-bold text-[var(--neon-pink)]">0</p>
+                </div>
+                <div id="result-badge" class="text-4xl filter grayscale opacity-30" title="Elite Operative Badge">
+                    🛡️
+                </div>
+            </div>
+
+            <h3 class="text-xs uppercase text-gray-400 font-bold mt-2">Data Reconstruction Log:</h3>
+            <div id="review-list" class="flex-grow overflow-y-auto max-h-[35vh] space-y-3 pr-2 scrollbar-thin scrollbar-thumb-gray-700">
+                <!-- Review items injected here -->
+            </div>
+
+            <button onclick="app.resetGame()" class="btn-neon-cyan w-full py-3 rounded-lg font-bold tracking-widest mt-2 text-sm">
+                RESTART PROTOCOL
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-auto pt-4 text-center">
+            <p class="text-[10px] text-gray-600 font-mono-tech tracking-widest">Education & Training Dept. © 2026</p>
+        </div>
+    </main>
+
+    <script>
+        /**
+         * AUDIO MANAGER
+         * Handles Web Audio API synthesis for lightweight, zero-dependency sound.
+         */
+        class WebAudioManager {
+            constructor() {
+                this.ctx = null;
+                this.isMuted = false;
+                this.bgmOsc1 = null;
+                this.bgmOsc2 = null;
+                this.bgmGain = null;
+                this.isPlayingBGM = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                const iconUnmuted = document.getElementById('icon-unmuted');
+                const iconMuted = document.getElementById('icon-muted');
+                
+                if (this.isMuted) {
+                    iconUnmuted.classList.add('hidden');
+                    iconMuted.classList.remove('hidden');
+                    if (this.bgmGain) this.bgmGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1);
+                } else {
+                    iconUnmuted.classList.remove('hidden');
+                    iconMuted.classList.add('hidden');
+                    this.init(); // Ensure context is running
+                    if (this.bgmGain && this.isPlayingBGM) {
+                        this.bgmGain.gain.setTargetAtTime(0.15, this.ctx.currentTime, 0.1);
+                    } else if (!this.isPlayingBGM) {
+                        this.startBGM();
+                    }
+                }
+            }
+
+            startBGM() {
+                if (this.isPlayingBGM || this.isMuted) return;
+                this.init();
+                
+                // Create a dark, pulsing synth drone (Cinematic Noir)
+                this.bgmOsc1 = this.ctx.createOscillator();
+                this.bgmOsc2 = this.ctx.createOscillator();
+                this.bgmGain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+                const lfo = this.ctx.createOscillator();
+                const lfoGain = this.ctx.createGain();
+
+                // Setup routing
+                this.bgmOsc1.connect(filter);
+                this.bgmOsc2.connect(filter);
+                filter.connect(this.bgmGain);
+                this.bgmGain.connect(this.ctx.destination);
+                
+                lfo.connect(lfoGain);
+                lfoGain.connect(filter.frequency);
+
+                // Configure sounds
+                this.bgmOsc1.type = 'sawtooth';
+                this.bgmOsc1.frequency.value = 55; // Low A
+                
+                this.bgmOsc2.type = 'sine';
+                this.bgmOsc2.frequency.value = 54.5; // Slight detune for pulsing
+
+                filter.type = 'lowpass';
+                filter.frequency.value = 400; // Muffled dark sound
+                filter.Q.value = 2;
+
+                // LFO for slow throbbing
+                lfo.type = 'sine';
+                lfo.frequency.value = 0.5; // 0.5 Hz throb
+                lfoGain.gain.value = 200; // Modulation depth
+
+                this.bgmGain.gain.value = 0; // Start silent, fade in
+                
+                this.bgmOsc1.start();
+                this.bgmOsc2.start();
+                lfo.start();
+                
+                this.bgmGain.gain.setTargetAtTime(0.15, this.ctx.currentTime, 2); // Fade in over 2s
+                this.isPlayingBGM = true;
+            }
+
+            playSFX(type) {
+                if (this.isMuted || !this.ctx) return;
+                this.init();
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                const t = this.ctx.currentTime;
+
+                if (type === 'click') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(400, t);
+                    osc.frequency.exponentialRampToValueAtTime(100, t + 0.1);
+                    gain.gain.setValueAtTime(0.1, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+                    osc.start(t);
+                    osc.stop(t + 0.1);
+                } 
+                else if (type === 'correct') {
+                    // Gen-Z Neon Chime (Fast Arpeggio)
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, t); // C5
+                    osc.frequency.setValueAtTime(659.25, t + 0.1); // E5
+                    osc.frequency.setValueAtTime(783.99, t + 0.2); // G5
+                    
+                    gain.gain.setValueAtTime(0, t);
+                    gain.gain.linearRampToValueAtTime(0.2, t + 0.05);
+                    gain.gain.linearRampToValueAtTime(0, t + 0.4);
+                    
+                    osc.start(t);
+                    osc.stop(t + 0.4);
+                }
+                else if (type === 'incorrect') {
+                    // Noir Error Buzz
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, t);
+                    osc.frequency.exponentialRampToValueAtTime(50, t + 0.3);
+                    
+                    gain.gain.setValueAtTime(0.2, t);
+                    gain.gain.linearRampToValueAtTime(0, t + 0.3);
+                    
+                    osc.start(t);
+                    osc.stop(t + 0.3);
+                }
+                else if (type === 'badge') {
+                    // Success chord
+                    const osc2 = this.ctx.createOscillator();
+                    osc.type = 'sine'; osc2.type = 'triangle';
+                    osc.frequency.value = 440; osc2.frequency.value = 554.37;
+                    osc2.connect(gain);
+                    gain.gain.setValueAtTime(0.2, t);
+                    gain.gain.linearRampToValueAtTime(0, t + 1.5);
+                    osc.start(t); osc2.start(t);
+                    osc.stop(t+1.5); osc2.stop(t+1.5);
+                }
+            }
+        }
+
+        const audioManager = new WebAudioManager();
+
+        /**
+         * GAME DATA & LOGIC
+         * Based on the provided Yummy Choice SOP image.
+         */
+        const gameData = [
+            {
+                text: "Crispy Boneless Chicken didisplay pada area ________ agar kualitas dan suhu tetap terjaga.",
+                correct: "warmer",
+                options: ["warmer", "oven", "microwave", "papper bag"]
+            },
+            {
+                text: "Untuk melakukan sampling, 1 pcs produk Crispy Boneless Chicken harus dibagi menjadi ________.",
+                correct: "6 bagian",
+                options: ["3 bagian", "4 bagian", "6 bagian", "2 menit"]
+            },
+            {
+                text: "Setelah dipotong untuk tester, potongan Crispy Boneless Chicken tersebut dimasukkan ke dalam ________.",
+                correct: "cup icip-icip",
+                options: ["papper bag", "cup icip-icip", "warmer", "oven"]
+            },
+            {
+                text: "Berbeda dengan varian original, untuk penawaran produk icip-icip Spicy Chicken Tender dibagi menjadi ________.",
+                correct: "4 bagian",
+                options: ["3 bagian", "4 bagian", "6 bagian", "2 bagian"]
+            },
+            {
+                text: "SOP Penawaran Langkah 1: Saat pelanggan mendekat, hal pertama yang harus diucapkan adalah ________.",
+                correct: "Salam pembuka",
+                options: ["Salam pembuka", "tawarkan tester/icip-icip", "kenalkan & tawarkan produk", "ucapkan terimakasih"]
+            },
+            {
+                text: "SOP Penawaran Langkah 2: Setelah salam, ucapkan kalimat '________' untuk menunjukkan empati dan sopan santun.",
+                correct: "mohon maaf mengganggu waktunya",
+                options: ["informasi promo yang sedang berlangsung", "arahkan pelanggan untuk transaksi", "mohon maaf mengganggu waktunya", "tawarkan tester/icip-icip"]
+            },
+            {
+                text: "SOP Penawaran Langkah 3: Masuk ke inti penawaran, agen harus melakukan '________'.",
+                correct: "kenalkan & tawarkan produk serta variannya",
+                options: ["ucapkan terimakasih", "kenalkan & tawarkan produk serta variannya", "Salam pembuka", "informasi promo yang sedang berlangsung"]
+            },
+            {
+                text: "SOP Penawaran Langkah 4: Agar pelanggan yakin dengan kualitas rasa, langkah selanjutnya adalah ________.",
+                correct: "tawarkan tester/icip-icip",
+                options: ["arahkan pelanggan untuk transaksi di kasir", "2 menit", "tawarkan tester/icip-icip", "cup icip-icip"]
+            },
+            {
+                text: "SOP Penawaran Langkah 5: Sebagai trigger closing tambahan, sampaikan '________' kepada pelanggan.",
+                correct: "informasi promo yang sedang berlangsung",
+                options: ["informasi promo yang sedang berlangsung", "mohon maaf mengganggu waktunya", "warmer", "ucapkan terimakasih"]
+            },
+            {
+                text: "SOP Penawaran Langkah Terakhir: Jika pelanggan bersedia membeli, arahkan pelanggan untuk transaksi di kasir dan jangan lupa ________.",
+                correct: "ucapkan terimakasih",
+                options: ["Salam pembuka", "kenalkan produk", "tawarkan tester", "ucapkan terimakasih"]
+            }
+        ];
+
+        const app = {
+            state: {
+                name: '',
+                phone: '',
+                currentIndex: 0,
+                score: 0,
+                answers: [], // Array of { question, userAns, correctAns, isCorrect }
+                hasBadge: false
+            },
+
+            // Utility to shuffle options
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            },
+
+            showScreen(screenId) {
+                ['screen-gateway', 'screen-briefing', 'screen-game', 'screen-debrief'].forEach(id => {
+                    document.getElementById(id).classList.add('hidden-screen');
+                });
+                document.getElementById(screenId).classList.remove('hidden-screen');
+            },
+
+            login() {
+                audioManager.playSFX('click');
+                const name = document.getElementById('input-name').value.trim();
+                const phone = document.getElementById('input-phone').value.trim();
+                
+                if (!name || !phone) {
+                    document.getElementById('login-error').classList.remove('hidden');
+                    return;
+                }
+                
+                this.state.name = name;
+                this.state.phone = phone;
+                
+                // Initialize audio context on first user interaction
+                audioManager.init();
+                
+                this.showScreen('screen-briefing');
+            },
+
+            startMission() {
+                audioManager.playSFX('click');
+                audioManager.startBGM();
+                
+                document.getElementById('hud-name').textContent = this.state.name;
+                this.state.currentIndex = 0;
+                this.state.score = 0;
+                this.state.answers = [];
+                this.state.hasBadge = false;
+                
+                document.getElementById('badge-container').classList.add('hidden');
+                document.getElementById('badge-container').classList.remove('badge-pulse', 'opacity-100', 'text-yellow-400');
+                
+                this.renderQuestion();
+                this.showScreen('screen-game');
+            },
+
+            renderQuestion() {
+                const q = gameData[this.state.currentIndex];
+                
+                // Update Progress
+                const progressPct = ((this.state.currentIndex) / gameData.length) * 100;
+                document.getElementById('progress-bar').style.width = `${progressPct}%`;
+                document.getElementById('progress-text').textContent = `${this.state.currentIndex + 1}/${gameData.length}`;
+                document.getElementById('progress-pct').textContent = `${Math.round(progressPct)}%`;
+                
+                // Render Text
+                // Replace ________ with a styled span
+                const formattedText = q.text.replace('________', '<span class="inline-block border-b-2 border-[var(--neon-cyan)] w-24 mx-1 animate-pulse h-4"></span>');
+                document.getElementById('question-text').innerHTML = formattedText;
+                
+                // Render Options
+                const optionsContainer = document.getElementById('options-container');
+                optionsContainer.innerHTML = '';
+                
+                const shuffledOptions = this.shuffleArray([...q.options]);
+                
+                shuffledOptions.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-neon-pink p-3 rounded-lg text-sm font-medium text-left transition-all active:scale-95';
+                    btn.textContent = opt;
+                    btn.onclick = () => this.handleAnswer(opt, btn);
+                    optionsContainer.appendChild(btn);
+                });
+            },
+
+            handleAnswer(selectedOpt, btnElement) {
+                // Prevent multiple clicks
+                const buttons = document.querySelectorAll('#options-container button');
+                buttons.forEach(b => b.disabled = true);
+                
+                const q = gameData[this.state.currentIndex];
+                const isCorrect = selectedOpt === q.correct;
+                
+                // Highlight selection
+                btnElement.classList.add('selected');
+
+                if (isCorrect) {
+                    audioManager.playSFX('correct');
+                    this.state.score += 10;
+                    document.getElementById('hud-score').textContent = `${this.state.score} PTS`;
+                    this.showFeedback(true);
+                } else {
+                    audioManager.playSFX('incorrect');
+                    btnElement.style.borderColor = 'red';
+                    btnElement.style.color = 'red';
+                    this.showFeedback(false);
+                }
+
+                // Record answer for debrief
+                this.state.answers.push({
+                    questionText: q.text.replace('________', '___'),
+                    userAns: selectedOpt,
+                    correctAns: q.correct,
+                    isCorrect: isCorrect
+                });
+
+                // Check Milestone (Badge) after 5 questions (index 4)
+                if (this.state.currentIndex === 4 && this.state.score >= 30 && !this.state.hasBadge) {
+                    this.awardBadge();
+                }
+
+                // Proceed to next after delay
+                setTimeout(() => {
+                    this.state.currentIndex++;
+                    if (this.state.currentIndex < gameData.length) {
+                        this.renderQuestion();
+                    } else {
+                        this.endMission();
+                    }
+                }, 1200);
+            },
+
+            showFeedback(isCorrect) {
+                const overlay = document.getElementById('feedback-overlay');
+                const content = document.getElementById('feedback-content');
+                const icon = document.getElementById('feedback-icon');
+                const title = document.getElementById('feedback-title');
+
+                overlay.classList.remove('hidden-screen');
+                content.classList.remove('scale-90');
+                content.classList.add('scale-100');
+
+                if (isCorrect) {
+                    icon.textContent = '✔️';
+                    title.textContent = 'DATA VERIFIED';
+                    title.className = 'text-2xl font-bold tracking-widest uppercase text-[var(--neon-cyan)] drop-shadow-[0_0_10px_rgba(0,243,255,0.8)]';
+                } else {
+                    icon.textContent = '❌';
+                    title.textContent = 'DATA CORRUPTED';
+                    title.className = 'text-2xl font-bold tracking-widest uppercase text-[var(--neon-pink)] drop-shadow-[0_0_10px_rgba(255,0,85,0.8)]';
+                }
+
+                setTimeout(() => {
+                    overlay.classList.add('hidden-screen');
+                    content.classList.remove('scale-100');
+                    content.classList.add('scale-90');
+                }, 1000);
+            },
+
+            awardBadge() {
+                this.state.hasBadge = true;
+                setTimeout(() => {
+                    audioManager.playSFX('badge');
+                    const badge = document.getElementById('badge-container');
+                    badge.classList.remove('hidden', 'opacity-50');
+                    badge.classList.add('opacity-100', 'text-yellow-400', 'badge-pulse');
+                }, 500); // Slight delay for dramatic effect
+            },
+
+            endMission() {
+                // Ensure progress bar is full
+                document.getElementById('progress-bar').style.width = `100%`;
+                document.getElementById('progress-text').textContent = `10/10`;
+                document.getElementById('progress-pct').textContent = `100%`;
+
+                setTimeout(() => {
+                    this.generateDebrief();
+                    this.showScreen('screen-debrief');
+                }, 500);
+            },
+
+            generateDebrief() {
+                const maxScore = gameData.length * 10;
+                const pct = Math.round((this.state.score / maxScore) * 100);
+                
+                document.getElementById('result-accuracy').textContent = `${pct}%`;
+                document.getElementById('result-score').textContent = this.state.score;
+                
+                const rankEl = document.getElementById('result-rank');
+                const msgEl = document.getElementById('result-message');
+                const badgeEl = document.getElementById('result-badge');
+
+                // Reinforcement Logic based on percentage
+                if (pct >= 80) {
+                    rankEl.textContent = "ELITE OPERATIVE";
+                    rankEl.dataset.text = "ELITE OPERATIVE";
+                    rankEl.className = "text-3xl sm:text-4xl font-bold uppercase glitch text-[var(--neon-cyan)]";
+                    msgEl.textContent = "Luar biasa. Protokol SOP Yummy Choice telah dipulihkan sepenuhnya. Standar emas terjaga.";
+                    if(this.state.hasBadge) {
+                        badgeEl.classList.remove('grayscale', 'opacity-30');
+                        badgeEl.classList.add('text-yellow-400', 'drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]');
+                    }
+                } else if (pct >= 50) {
+                    rankEl.textContent = "FIELD AGENT";
+                    rankEl.dataset.text = "FIELD AGENT";
+                    rankEl.className = "text-3xl sm:text-4xl font-bold uppercase glitch text-white";
+                    msgEl.textContent = "Data berhasil diselamatkan, namun beberapa protokol masih korup. Tinjau kembali manual SOP.";
+                } else {
+                    rankEl.textContent = "ROOKIE";
+                    rankEl.dataset.text = "ROOKIE";
+                    rankEl.className = "text-3xl sm:text-4xl font-bold uppercase glitch text-[var(--neon-pink)]";
+                    msgEl.textContent = "Misi gagal. Terlalu banyak anomali data. Pelatihan ulang diwajibkan untuk operasional Yummy Choice.";
+                }
+
+                // Render Review List
+                const reviewList = document.getElementById('review-list');
+                reviewList.innerHTML = '';
+                
+                this.state.answers.forEach((ans, i) => {
+                    const item = document.createElement('div');
+                    item.className = `p-3 rounded border ${ans.isCorrect ? 'bg-green-900/20 border-green-700/50' : 'bg-red-900/20 border-red-700/50'} text-xs relative overflow-hidden`;
+                    
+                    const statusIcon = ans.isCorrect ? '<span class="text-green-400">✓</span>' : '<span class="text-red-400">✗</span>';
+                    
+                    let correctionHtml = '';
+                    if (!ans.isCorrect) {
+                        correctionHtml = `<div class="mt-1 text-[var(--neon-cyan)]">Target: <span class="font-bold">${ans.correctAns}</span></div>`;
+                    }
+
+                    item.innerHTML = `
+                        <div class="flex gap-2">
+                            <div class="mt-0.5">${statusIcon}</div>
+                            <div>
+                                <p class="text-gray-300 leading-relaxed">${i+1}. ${ans.questionText}</p>
+                                <div class="mt-1 text-gray-500">Input: <span class="${ans.isCorrect ? 'text-green-400' : 'text-[var(--neon-pink)] line-through'}">${ans.userAns}</span></div>
+                                ${correctionHtml}
+                            </div>
+                        </div>
+                    `;
+                    reviewList.appendChild(item);
+                });
+            },
+
+            resetGame() {
+                audioManager.playSFX('click');
+                // Don't reset Name/Phone, just go back to briefing
+                this.showScreen('screen-briefing');
+            }
+        };
+    </script>
+</body>
+</html>
